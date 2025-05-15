@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banking AI Routing Framework</title>
+    <style>
+        :root {
+            --primary: #004d99;
+            --secondary: #0077cc;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --purple: #9b59b6;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --border: #dee2e6;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-top: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: var(--secondary);
+        }
+        
+        .result-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 25px;
+            position: relative;
+            border-top: 5px solid var(--primary);
+            display: none;
+        }
+        
+        .result-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .inference-option {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            background-color: #f8f9fa;
+            transition: transform 0.2s;
+        }
+        
+        .inference-option.selected {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .onprem {
+            border-left: 5px solid var(--success);
+        }
+        
+        .incountry {
+            border-left: 5px solid var(--warning);
+        }
+        
+        .international {
+            border-left: 5px solid var(--purple);
+        }
+        
+        .option-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            flex-shrink: 0;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        
+        .onprem-icon {
+            color: var(--success);
+            border: 3px solid var(--success);
+        }
+        
+        .incountry-icon {
+            color: var(--warning);
+            border: 3px solid var(--warning);
+        }
+        
+        .international-icon {
+            color: var(--purple);
+            border: 3px solid var(--purple);
+        }
+        
+        .option-details h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.2rem;
+        }
+        
+        .option-details p {
+            margin: 0 0 5px 0;
+            color: #555;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .info-chip {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-right: 6px;
+            margin-bottom: 6px;
+            background-color: #e9ecef;
+        }
+        
+        .info-chip.critical {
+            background-color: #ffeaea;
+            color: #e74c3c;
+            border: 1px solid #fabdbd;
+        }
+        
+        .info-chip.high {
+            background-color: #ffedda;
+            color: #e67e22;
+            border: 1px solid #fad4a9;
+        }
+        
+        .info-chip.medium {
+            background-color: #e8f4fd;
+            color: #3498db;
+            border: 1px solid #c5e2f6;
+        }
+        
+        .info-chip.low {
+            background-color: #eafaf1;
+            color: #27ae60;
+            border: 1px solid #bfedce;
+        }
+        
+        .features-list {
+            margin-top: 15px;
+            padding-left: 25px;
+        }
+        
+        .features-list li {
+            margin-bottom: 8px;
+        }
+        
+        .factors-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .recommendation-reason {
+            background-color: #f1f8ff;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        
+        .infrastructure-comparison {
+            margin-top: 30px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .comparison-table th, .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .comparison-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .ideal-for {
+            font-style: italic;
+            color: #555;
+            margin-top: 10px;
+        }
+        
+        .selection-summary {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .selection-summary p {
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        .selection-summary strong {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Banking AI Infrastructure Router</h1>
+        <p>Select your use case parameters to determine the optimal AI infrastructure</p>
+    </header>
+    
+    <div class="card">
+        <h2>Select Use Case Parameters</h2>
+        
+        <div class="form-group">
+            <label for="use-case">Use Case Category</label>
+            <select id="use-case">
+                <option value="">-- Select Use Case --</option>
+                <option value="account">Customer Account Management</option>
+                <option value="fraud">Fraud Detection & Prevention</option>
+                <option value="wealth">Investment & Wealth Management</option>
+                <option value="loans">Loan & Mortgage Processing</option>
+                <option value="customer">Customer Service Automation</option>
+                <option value="compliance">Regulatory Compliance</option>
+                <option value="marketing">Marketing & Customer Analytics</option>
+                <option value="operations">Back Office Operations</option>
+                <option value="risk">Risk Assessment</option>
+                <option value="trading">Trading & Market Analysis</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="data-sensitivity">Data Sensitivity</label>
+            <select id="data-sensitivity">
+                <option value="">-- Select Sensitivity Level --</option>
+                <option value="critical">Critical (PII, Account Numbers, Passwords)</option>
+                <option value="high">High (Transaction Data, Credit Scores)</option>
+                <option value="medium">Medium (Product Info, Policies, Rates)</option>
+                <option value="low">Low (Public Information, Generic Content)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="response-time">Response Time Needs</label>
+            <select id="response-time">
+                <option value="">-- Select Response Time Requirement --</option>
+                <option value="real-time">Real-time (Under 1 second)</option>
+                <option value="fast">Fast (1-2 seconds)</option>
+                <option value="standard">Standard (2-5 seconds)</option>
+                <option value="batch">Batch Processing (No immediate response)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="regulatory">Regulatory Requirements</label>
+            <select id="regulatory">
+                <option value="">-- Select Regulatory Requirements --</option>
+                <option value="strict">Strict (Must remain in-country)</option>
+                <option value="moderate">Moderate (Regional restrictions)</option>
+                <option value="standard">Standard Banking Regulations</option>
+                <option value="minimal">Minimal (Non-regulated content)</option>
+            </select>
+        </div>
+        
+        <button id="evaluate-btn">Evaluate Infrastructure Options</button>
+    </div>
+    
+    <div id="result-container" class="result-container">
+        <h2 class="result-title">Recommended AI Infrastructure</h2>
+        
+        <div class="selection-summary" id="selection-summary">
+            <!-- Will be filled by JavaScript -->
+        </div>
+        
+        <div id="inference-options">
+            <!-- Will be filled by JavaScript -->
+        </div>
+        
+        <div class="recommendation-reason" id="recommendation-reason">
+            <!-- Will be filled by JavaScript -->
+        </div>
+        
+        <div class="infrastructure-comparison">
+            <h3>Infrastructure Options Comparison</h3>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Infrastructure</th>
+                        <th>Response Time</th>
+                        <th>Data Protection</th>
+                        <th>Scalability</th>
+                        <th>Cost Efficiency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>On-Premises GPU Farm</strong><br>(16x NVIDIA H200)</td>
+                        <td>Fastest<br>(&lt;1s)</td>
+                        <td>Highest<br>(Local Control)</td>
+                        <td>Limited<br>(16 GPUs)</td>
+                        <td>High Fixed Cost</td>
+                    </tr>
+                    <tr>
+                        <td><strong>In-country Azure OpenAI on PTU</strong></td>
+                        <td>Fast<br>(1-2s)</td>
+                        <td>High<br>(Regional)</td>
+                        <td>Medium<br>(PTU limit)</td>
+                        <td>Medium</td>
+                    </tr>
+                    <tr>
+                        <td><strong>International Azure OpenAI</strong><br>(Pay-as-you-go)</td>
+                        <td>Standard<br>(2-5s)</td>
+                        <td>Standard</td>
+                        <td>Unlimited</td>
+                        <td>Usage-based</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const useCaseSelect = document.getElementById('use-case');
+        const dataSensitivitySelect = document.getElementById('data-sensitivity');
+        const responseTimeSelect = document.getElementById('response-time');
+        const regulatorySelect = document.getElementById('regulatory');
+        const evaluateBtn = document.getElementById('evaluate-btn');
+        const resultContainer = document.getElementById('result-container');
+        const selectionSummary = document.getElementById('selection-summary');
+        const inferenceOptions = document.getElementById('inference-options');
+        const recommendationReason = document.getElementById('recommendation-reason');
+        
+        // Use case definitions and routing rules
+        const useCases = {
+            account: {
+                name: "Customer Account Management",
+                description: "Account balances, transaction history, statements, account details",
+                defaultSensitivity: "high",
+                requiresRealTime: true,
+                features: [
+                    "Viewing account balances and transaction history",
+                    "Updating account information",
+                    "Account opening and closure",
+                    "Statement generation and delivery"
+                ]
+            },
+            fraud: {
+                name: "Fraud Detection & Prevention",
+                description: "Real-time fraud monitoring, suspicious activity detection",
+                defaultSensitivity: "critical",
+                requiresRealTime: true,
+                features: [
+                    "Real-time transaction monitoring",
+                    "Suspicious activity detection",
+                    "Fraud alert generation",
+                    "Customer verification"
+                ]
+            },
+            wealth: {
+                name: "Investment & Wealth Management",
+                description: "Portfolio analysis, investment recommendations, financial planning",
+                defaultSensitivity: "high",
+                requiresRealTime: false,
+                features: [
+                    "Portfolio analysis and optimization",
+                    "Investment recommendations",
+                    "Financial planning and retirement",
+                    "Market insights and research"
+                ]
+            },
+            loans: {
+                name: "Loan & Mortgage Processing",
+                description: "Loan applications, approvals, rate calculations, mortgage processing",
+                defaultSensitivity: "high",
+                requiresRealTime: false,
+                features: [
+                    "Loan application processing",
+                    "Credit risk assessment",
+                    "Interest rate calculations",
+                    "Payment scheduling and tracking"
+                ]
+            },
+            customer: {
+                name: "Customer Service Automation",
+                description: "Chatbots, virtual assistants, customer support",
+                defaultSensitivity: "medium",
+                requiresRealTime: true,
+                features: [
+                    "Automated customer inquiries",
+                    "Support ticket management",
+                    "FAQs and product information",
+                    "Service requests processing"
+                ]
+            },
+            compliance: {
+                name: "Regulatory Compliance",
+                description: "Compliance monitoring, regulatory reporting, audit support",
+                defaultSensitivity: "high",
+                requiresRealTime: false,
+                features: [
+                    "Regulatory reporting generation",
+                    "Compliance monitoring",
+                    "Policy enforcement",
+                    "Audit support and documentation"
+                ]
+            },
+            marketing: {
+                name: "Marketing & Customer Analytics",
+                description: "Customer segmentation, campaign analysis, product recommendations",
+                defaultSensitivity: "medium",
+                requiresRealTime: false,
+                features: [
+                    "Customer segmentation",
+                    "Campaign performance analysis",
+                    "Product recommendations",
+                    "Market research and trends"
+                ]
+            },
+            operations: {
+                name: "Back Office Operations",
+                description: "Process automation, workflow optimization, document processing",
+                defaultSensitivity: "medium",
+                requiresRealTime: false,
+                features: [
+                    "Document processing and analysis",
+                    "Workflow automation",
+                    "Operational reporting",
+                    "Data entry and validation"
+                ]
+            },
+            risk: {
+                name: "Risk Assessment",
+                description: "Credit risk, market risk, operational risk analysis",
+                defaultSensitivity: "high",
+                requiresRealTime: false,
+                features: [
+                    "Credit risk modeling",
+                    "Market risk analysis",
+                    "Operational risk assessment",
+                    "Stress testing and scenarios"
+                ]
+            },
+            trading: {
+                name: "Trading & Market Analysis",
+                description: "Market data analysis, trading models, price prediction",
+                defaultSensitivity: "high",
+                requiresRealTime: true,
+                features: [
+                    "Real-time market data analysis",
+                    "Trading signal generation",
+                    "Price prediction models",
+                    "Portfolio optimization algorithms"
+                ]
+            }
+        };
+        
+        // Infrastructure options
+        const infrastructureOptions = {
+            onprem: {
+                name: "On-Premises GPU Farm",
+                description: "16x NVIDIA H200 GPUs with Triton Inference Server",
+                icon: "OP",
+                iconClass: "onprem-icon",
+                class: "onprem",
+                responseTime: "< 1 second",
+                dataSecurity: "Highest (full control)",
+                scalability: "Limited to on-premises capacity",
+                idealFor: "Highly sensitive data requiring fastest processing"
+            },
+            incountry: {
+                name: "In-country Azure OpenAI on PTU",
+                description: "Dedicated capacity within regional boundaries",
+                icon: "IC",
+                iconClass: "incountry-icon",
+                class: "incountry",
+                responseTime: "1-2 seconds",
+                dataSecurity: "High (regional compliance)",
+                scalability: "Limited by PTU allocation",
+                idealFor: "Sensitive data with regulatory requirements"
+            },
+            international: {
+                name: "International Azure OpenAI",
+                description: "Pay-as-you-go service with global distribution",
+                icon: "IN",
+                iconClass: "international-icon",
+                class: "international",
+                responseTime: "2-5 seconds",
+                dataSecurity: "Standard",
+                scalability: "Virtually unlimited",
+                idealFor: "Non-sensitive, general purpose use cases"
+            }
+        };
+        
+        // Update form based on use case selection
+        useCaseSelect.addEventListener('change', function() {
+            const useCase = useCases[this.value];
+            if (useCase) {
+                dataSensitivitySelect.value = useCase.defaultSensitivity;
+                if (useCase.requiresRealTime) {
+                    responseTimeSelect.value = 'real-time';
+                }
+            }
+        });
+        
+        // Evaluate button click handler
+        evaluateBtn.addEventListener('click', function() {
+            // Get selected values
+            const useCaseValue = useCaseSelect.value;
+            const sensitivityValue = dataSensitivitySelect.value;
+            const responseTimeValue = responseTimeSelect.value;
+            const regulatoryValue = regulatorySelect.value;
+            
+            // Validate that all fields are filled
+            if (!useCaseValue || !sensitivityValue || !responseTimeValue || !regulatoryValue) {
+                alert('Please select all options to continue');
+                return;
+            }
+            
+            // Determine recommended infrastructure
+            const recommended = determineRecommendation(
+                useCaseValue, 
+                sensitivityValue, 
+                responseTimeValue, 
+                regulatoryValue
+            );
+            
+            // Display results
+            displayResults(
+                useCaseValue, 
+                sensitivityValue, 
+                responseTimeValue, 
+                regulatoryValue, 
+                recommended
+            );
+            
+            // Show result container
+            resultContainer.style.display = 'block';
+            
+            // Scroll to results
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // Logic to determine the recommended infrastructure
+        function determineRecommendation(useCase, sensitivity, responseTime, regulatory) {
+            // Critical data or strict regulatory = On-Prem
+            if (sensitivity === 'critical' || regulatory === 'strict') {
+                return 'onprem';
+            }
+            
+            // Real-time needs with high sensitivity = On-Prem
+            if (responseTime === 'real-time' && (sensitivity === 'high' || useCase === 'fraud' || useCase === 'trading')) {
+                return 'onprem';
+            }
+            
+            // High sensitivity with moderate regulation = In-Country
+            if ((sensitivity === 'high' || regulatory === 'moderate') && responseTime !== 'real-time') {
+                return 'incountry';
+            }
+            
+            // Medium sensitivity with fast response = In-Country
+            if (sensitivity === 'medium' && responseTime === 'fast') {
+                return 'incountry';
+            }
+            
+            // Low sensitivity or non-real-time standard needs = International
+            if (sensitivity === 'low' || (responseTime === 'standard' || responseTime === 'batch')) {
+                if (regulatory === 'minimal') {
+                    return 'international';
+                } else {
+                    return 'incountry';
+                }
+            }
+            
+            // Default fallback
+            return 'incountry';
+        }
+        
+        // Display the results
+        function displayResults(useCaseValue, sensitivityValue, responseTimeValue, regulatoryValue, recommended) {
+            const useCase = useCases[useCaseValue];
+            
+            // Update selection summary
+            selectionSummary.innerHTML = `
+                <p><strong>Use Case:</strong> ${useCase.name}</p>
+                <p><strong>Data Sensitivity:</strong> ${getReadableSensitivity(sensitivityValue)}</p>
+                <p><strong>Response Time:</strong> ${getReadableResponseTime(responseTimeValue)}</p>
+                <p><strong>Regulatory:</strong> ${getReadableRegulatory(regulatoryValue)}</p>
+            `;
+            
+            // Create HTML for all infrastructure options, marking the recommended one
+            let optionsHTML = '';
+            
+            // Add the recommended option first
+            const recommendedInfra = infrastructureOptions[recommended];
+            optionsHTML += createInfrastructureOption(recommendedInfra, true);
+            
+            // Add other options
+            for (const key in infrastructureOptions) {
+                if (key !== recommended) {
+                    optionsHTML += createInfrastructureOption(infrastructureOptions[key], false);
+                }
+            }
+            
+            // Update options container
+            inferenceOptions.innerHTML = optionsHTML;
+            
+            // Update recommendation reason
+            recommendationReason.innerHTML = `
+                <h3>Recommendation Rationale</h3>
+                <p>${getRecommendationReason(useCaseValue, sensitivityValue, responseTimeValue, regulatoryValue, recommended)}</p>
+                
+                <div class="factors-container">
+                    ${sensitivityValue === 'critical' || sensitivityValue === 'high' ? 
+                      '<span class="info-chip critical">High Data Sensitivity</span>' : ''}
+                    ${responseTimeValue === 'real-time' ? 
+                      '<span class="info-chip high">Real-time Response</span>' : ''}
+                    ${regulatoryValue === 'strict' ? 
+                      '<span class="info-chip critical">Strict Regulatory</span>' : ''}
+                    ${useCaseValue === 'fraud' || useCaseValue === 'trading' ? 
+                      '<span class="info-chip high">Critical Business Function</span>' : ''}
+                </div>
+            `;
+        }
+        
+        // Create HTML for an infrastructure option
+        function createInfrastructureOption(infra, isRecommended) {
+            return `
+                <div class="inference-option ${infra.class} ${isRecommended ? 'selected' : ''}">
+                    <div class="option-icon ${infra.iconClass}">${infra.icon}</div>
+                    <div class="option-details">
+                        <h3>${infra.name} ${isRecommended ? '(Recommended)' : ''}</h3>
+                        <p>${infra.description}</p>
+                        <p><strong>Response Time:</strong> ${infra.responseTime}</p>
+                        <p><strong>Data Security:</strong> ${infra.dataSecurity}</p>
+                        <p class="ideal-for">${infra.idealFor}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Get readable sensitivity level
+        function getReadableSensitivity(value) {
+            const map = {
+                'critical': 'Critical (PII, Account Numbers, Passwords)',
+                'high': 'High (Transaction Data, Credit Scores)',
+                'medium': 'Medium (Product Info, Policies, Rates)',
+                'low': 'Low (Public Information, Generic Content)'
+            };
+            return map[value] || value;
+        }
+        
+        // Get readable response time
+        function getReadableResponseTime(value) {
+            const map = {
+                'real-time': 'Real-time (Under 1 second)',
+                'fast': 'Fast (1-2 seconds)',
+                'standard': 'Standard (2-5 seconds)',
+                'batch': 'Batch Processing (No immediate response)'
+            };
+            return map[value] || value;
+        }
+        
+        // Get readable regulatory requirement
+        function getReadableRegulatory(value) {
+            const map = {
+                'strict': 'Strict (Must remain in-country)',
+                'moderate': 'Moderate (Regional restrictions)',
+                'standard': 'Standard Banking Regulations',
+                'minimal': 'Minimal (Non-regulated content)'
+            };
+            return map[value] || value;
+        }
+        
+        // Generate recommendation reason based on selections
+        function getRecommendationReason(useCaseValue, sensitivityValue, responseTimeValue, regulatoryValue, recommended) {
+            const useCase = useCases[useCaseValue];
+            
+            if (recommended === 'onprem') {
+                if (sensitivityValue === 'critical') {
+                    return `This use case involves critical sensitive data (${getReadableSensitivity(sensitivityValue)}) that should remain under direct bank control. On-Premises GPU infrastructure provides the highest level of data protection and security while delivering the fastest response times needed for this workload.`;
+                }
+                
+                if (responseTimeValue === 'real-time') {
+                    return `The ${useCase.name} use case requires real-time processing (under 1 second response) with high data sensitivity. On-Premises GPU infrastructure with Triton Inference Server is optimized for these performance-critical and sensitive workloads.`;
+                }
+                
+                if (regulatoryValue === 'strict') {
+                    return `Due to strict regulatory requirements that mandate in-house data processing, this workload must be handled by On-Premises GPU infrastructure to ensure complete compliance with data residency regulations.`;
+                }
+                
+                return `The combination of data sensitivity, response time needs, and regulatory requirements for ${useCase.name} makes On-Premises GPU infrastructure the most appropriate option to ensure both performance and compliance.`;
+            }
+            
+            if (recommended === 'incountry') {
+                if (sensitivityValue === 'high' || regulatoryValue === 'moderate') {
+                    return `This use case involves sensitive data that must remain within country borders, but doesn't require the absolute fastest processing times. In-country Azure OpenAI on PTU provides the right balance of regional compliance, good performance, and cost efficiency.`;
+                }
+                
+                if (responseTimeValue === 'fast') {
+                    return `The ${useCase.name} use case requires fast response times (1-2 seconds) while handling moderately sensitive data. In-country Azure OpenAI on PTU provides good performance with appropriate data protection levels.`;
+                }
+                
+                return `For this ${useCase.name} workload, In-country Azure OpenAI on PTU provides the optimal balance between regional compliance, performance, and resource allocation without needing the highest level of on-premises security.`;
+            }
+            
+            if (recommended === 'international') {
+                return `This ${useCase.name} use case involves lower sensitivity data with standard response time requirements and minimal regulatory restrictions. International Azure OpenAI (Pay-as-you-go) provides a cost-effective solution with virtually unlimited scalability for this type of workload.`;
+            }
+            
+            return `Based on your selected parameters, we've determined the most appropriate infrastructure for this workload.`;
+        }
+    </script>
+</body>
+</html>
