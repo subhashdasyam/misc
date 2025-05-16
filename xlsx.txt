@@ -1,0 +1,104 @@
+const XlsxStreamReader = require('xlsx-stream-reader');
+const fs = require('fs');
+const { Transform } = require('stream');
+
+// Create output stream instead of collecting in memory
+const outputStream = fs.createWriteStream('processed-output.jsonl');
+
+// Track memory usage
+function logMemoryUsage() {
+  const memUsage = process.memoryUsage();
+  console.log(`Memory usage: ${Math.round(memUsage.heapUsed / 1024 / 1024)} MB`);
+}
+
+// Set interval to monitor memory
+const memoryInterval = setInterval(logMemoryUsage, 5000);
+
+// Create transform stream to process without accumulation
+const processTransform = new Transform({
+  objectMode: true,
+  transform(row, encoding, callback) {
+    try {
+      // Process row directly
+      const result = processRow(row);
+      
+      // Stream out result immediately (as JSON lines)
+      if (result) {
+        this.push(JSON.stringify(result) + '\n');
+      }
+      
+      // Force row data to be garbage collected
+      row = null;
+      
+      // Occasionally force garbage collection
+      if (global.gc && Math.random() < 0.01) {
+        global.gc();
+      }
+      
+      callback();
+    } catch (err) {
+      callback(err);
+    }
+  }
+});
+
+// Read Excel file as stream
+const xlsxStream = fs.createReadStream('large-file.xlsx');
+const workBookReader = new XlsxStreamReader();
+
+workBookReader.on('worksheet', worksheet => {
+  console.log(`Processing worksheet ${worksheet.name}`);
+  
+  // Set up batch counter
+  let rowCount = 0;
+  
+  worksheet.on('row', row => {
+    // Skip header if needed
+    if (rowCount === 0 && shouldSkipHeader) {
+      rowCount++;
+      return;
+    }
+    
+    // Push to transform stream and immediately remove reference
+    processTransform.write(row.values);
+    row.values = null;
+    
+    rowCount++;
+    if (rowCount % 1000 === 0) {
+      console.log(`Processed ${rowCount} rows`);
+    }
+  });
+  
+  worksheet.on('end', () => {
+    processTransform.end();
+  });
+  
+  worksheet.process();
+});
+
+// Connect streams
+processTransform.pipe(outputStream);
+xlsxStream.pipe(workBookReader);
+
+// Clean up when done
+outputStream.on('finish', () => {
+  clearInterval(memoryInterval);
+  console.log('Processing complete');
+  logMemoryUsage();
+});
+
+function processRow(rowData) {
+  // Process row here - return processed result without creating large objects
+  // IMPORTANT: Don't build arrays or objects that accumulate
+  return { 
+    // Return minimal processed data
+    value1: transformValue(rowData[1]),
+    value2: transformValue(rowData[2])
+    // Don't create unnecessary fields or objects
+  };
+}
+
+function transformValue(value) {
+  // Perform minimal transformations
+  return value ? value.toString().trim() : "";
+}
